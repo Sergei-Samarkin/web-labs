@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const Event = require('../models/event');
-const apiKeyMiddleware = require('../middleware/apiKey');
 
 /**
  * @swagger
@@ -19,9 +18,7 @@ const apiKeyMiddleware = require('../middleware/apiKey');
  *               items:
  *                 $ref: '#/components/schemas/Event'
  */
-router.get('/events', 
-  apiKeyMiddleware,
-  async (req, res) => {
+router.get('/events', async (req, res) => {
   try {
     const { category } = req.query;
     const where = {};
@@ -60,9 +57,7 @@ router.get('/events',
  *       404:
  *         description: Мероприятие не найдено
  */
-router.get('/events/:id', 
-  apiKeyMiddleware,
-  async (req, res) => {
+router.get('/events/:id', async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
     if (!event) {

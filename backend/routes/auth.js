@@ -3,7 +3,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken')
 const User = require('../models/user');
 const dotenv = require('dotenv');
-const apiKeyMiddleware = require('../middleware/apiKey');
 const router = express.Router();
 
 dotenv.config();
@@ -71,9 +70,7 @@ dotenv.config();
  *         description: Неверный запрос или email уже существует
  */
 
-router.post("/register", 
-    apiKeyMiddleware,
-    async (req, res) => {
+router.post("/register",async (req, res) => {
         const { name, email, password } = req.body;
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'Заполните все поля' });
@@ -127,9 +124,7 @@ router.post("/register",
  *         description: Внутренняя ошибка сервера
  */
 
-router.post('/login', 
-    apiKeyMiddleware,
-    async (req, res) => {
+router.post('/login', async (req, res) => {
         const { email, password } = req.body;
         if (!email || !password) {
             return res.status(400).json({ message: 'Заполните все поля' });

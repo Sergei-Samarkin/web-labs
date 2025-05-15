@@ -49,7 +49,7 @@ const express = require('express');
 const router = express.Router();
 const Event = require('../models/event');
 const passport = require('passport');
-const apiKeyMiddleware = require('../middleware/apiKey');
+const { Op } = require('sequelize');
 
 /**
  * @swagger
@@ -69,8 +69,9 @@ const apiKeyMiddleware = require('../middleware/apiKey');
  *       400:
  *         description: Ошибка валидации
  */
+
+const DAILY_EVENT_LIMIT = parseInt(process.env.DAILY_EVENT_LIMIT) || 5;
 router.post('/events', 
-  apiKeyMiddleware,
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
   
@@ -80,6 +81,26 @@ router.post('/events',
       if (!title || !date || !createdBy) {
         return res.status(400).json({ message: 'Обязательные поля: title, date, createdBy' });
       }
+
+    // Получаем текущую дату и дату 24 часа назад
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    // Считаем количество событий, созданных этим пользователем за последние 24 часа
+    const eventCount = await Event.count({
+      where: {
+        createdBy,
+        createdAt: {
+          [Op.gte]: yesterday,
+        },
+      },
+    });
+
+    if (eventCount >= DAILY_EVENT_LIMIT) {
+      return res.status(429).json({
+        message: `Превышен лимит создания событий. Лимит: ${DAILY_EVENT_LIMIT} событий в сутки.`,
+      });
+    }
 
       const event = await Event.create({ title, description, category, date, createdBy });
       res.status(201).json(event);
@@ -114,7 +135,6 @@ router.post('/events',
  *         description: Мероприятие не найдено
  */
 router.put('/events/:id', 
-  apiKeyMiddleware,
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
   try {
@@ -150,7 +170,6 @@ router.put('/events/:id',
  *         description: Мероприятие не найдено
  */
 router.delete('/events/:id', 
-  apiKeyMiddleware,
   passport.authenticate('jwt', { session: false }),
   async (req, res) => {
   try {
