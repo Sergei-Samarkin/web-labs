@@ -1,0 +1,103 @@
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: API для управления пользователями
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: Уникальный идентификатор пользователя
+ *         name:
+ *           type: string
+ *           description: Имя пользователя
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: Email пользователя
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: Дата регистрации
+ *       example:
+ *         id: 1
+ *         name: Иван Иванов
+ *         email: ivan@example.com
+ *         createdAt: 2025-05-14T10:30:00Z
+ */
+
+
+const express = require('express');
+const router = express.Router();
+const User = require('../models/user');
+
+/**
+ * @swagger
+ * /users:
+ *   post:
+ *     summary: Создать нового пользователя
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *     responses:
+ *       201:
+ *         description: Пользователь создан
+ *       400:
+ *         description: Неверный запрос или email уже существует
+ */
+router.post('/', async (req, res) => {
+  try {
+    const { name, email } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ message: 'Имя и email обязательны' });
+    }
+
+    const existing = await User.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ message: 'Email уже используется' });
+    }
+
+    const user = await User.create({ name, email });
+    res.status(201).json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Ошибка при создании пользователя', error: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Получить список всех пользователей
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Список пользователей
+ */
+router.get('/', async (req, res) => {
+  try {
+    const users = await User.findAll();
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ message: 'Ошибка получения пользователей', error: err.message });
+  }
+});
+
+module.exports = router;
