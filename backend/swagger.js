@@ -13,7 +13,8 @@ const options = {
   },
   apis: [
     './backend/routes/events.js',
-    './backend/routes/users.js'
+    './backend/routes/public.js',
+    './backend/routes/auth.js',
   ], // сюда попадают все роуты
 };
 

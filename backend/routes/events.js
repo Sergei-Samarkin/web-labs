@@ -26,9 +26,9 @@
  *         description:
  *           type: string
  *           description: Описание мероприятия
- *         location:
- *           type: string
- *           description: Место проведения
+ *         category:
+ *           type: DataTypes.ENUM('концерт', 'лекция', 'выставка', 'встреча'),
+ *           description: Категория события
  *         date:
  *           type: string
  *           format: date-time
@@ -45,75 +45,11 @@
  *         createdBy: 1
  */
 
-
-
 const express = require('express');
 const router = express.Router();
 const Event = require('../models/event');
-
-
-
-/**
- * @swagger
- * /events:
- *   get:
- *     summary: Получить список всех мероприятий
- *     tags: [Events]
- *     responses:
- *       200:
- *         description: Список мероприятий
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Event'
- */
-router.get('/', async (req, res) => {
-  try {
-    const events = await Event.findAll();
-    res.json(events);
-  } catch (err) {
-    res.status(500).json({ message: 'Ошибка получения мероприятий', error: err.message });
-  }
-});
-
-
-/**
- * @swagger
- * /events/{id}:
- *   get:
- *     summary: Получить мероприятие по ID
- *     tags: [Events]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID мероприятия
- *     responses:
- *       200:
- *         description: Найденное мероприятие
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Event'
- *       404:
- *         description: Мероприятие не найдено
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const event = await Event.findByPk(req.params.id);
-    if (!event) {
-      return res.status(404).json({ message: 'Мероприятие не найдено' });
-    }
-    res.json(event);
-  } catch (err) {
-    res.status(500).json({ message: 'Ошибка получения мероприятия', error: err.message });
-  }
-});
-
+const passport = require('passport');
+const apiKeyMiddleware = require('../middleware/apiKey');
 
 /**
  * @swagger
@@ -133,19 +69,23 @@ router.get('/:id', async (req, res) => {
  *       400:
  *         description: Ошибка валидации
  */
-router.post('/', async (req, res) => {
-  try {
-    const { title, description, location, date, createdBy } = req.body;
+router.post('/events', 
+  apiKeyMiddleware,
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+  
+    try {
+      const { title, description, category, date, createdBy } = req.body;
 
-    if (!title || !date || !createdBy || !location) {
-      return res.status(400).json({ message: 'Обязательные поля: title, location, date, createdBy' });
+      if (!title || !date || !createdBy) {
+        return res.status(400).json({ message: 'Обязательные поля: title, date, createdBy' });
+      }
+
+      const event = await Event.create({ title, description, category, date, createdBy });
+      res.status(201).json(event);
+    } catch (err) {
+      res.status(500).json({ message: 'Ошибка при создании мероприятия', error: err.message });
     }
-
-    const event = await Event.create({ title, description, location, date, createdBy });
-    res.status(201).json(event);
-  } catch (err) {
-    res.status(500).json({ message: 'Ошибка при создании мероприятия', error: err.message });
-  }
 });
 
 
@@ -173,15 +113,18 @@ router.post('/', async (req, res) => {
  *       404:
  *         description: Мероприятие не найдено
  */
-router.put('/:id', async (req, res) => {
+router.put('/events/:id', 
+  apiKeyMiddleware,
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
     if (!event) {
       return res.status(404).json({ message: 'Мероприятие не найдено' });
     }
 
-    const { title, description, location, date } = req.body;
-    await event.update({ title, description, location, date });
+    const { title, description, category, date } = req.body;
+    await event.update({ title, description, category, date });
     res.json(event);
   } catch (err) {
     res.status(500).json({ message: 'Ошибка при обновлении мероприятия', error: err.message });
@@ -206,7 +149,10 @@ router.put('/:id', async (req, res) => {
  *       404:
  *         description: Мероприятие не найдено
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/events/:id', 
+  apiKeyMiddleware,
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
     if (!event) {

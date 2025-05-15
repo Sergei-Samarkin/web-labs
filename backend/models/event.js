@@ -17,12 +17,9 @@ const Event = sequelize.define('Event', {
     description: {
         type: DataTypes.TEXT,
     },
-    location: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-        validate: {
-            notEmpty: true,
-        },
+    category: {
+        type: DataTypes.ENUM('концерт', 'лекция', 'выставка', 'встреча'),
+        defaultValue: 'встреча',
     },
     date: {
         type: DataTypes.DATE,
