@@ -26,9 +26,9 @@
  *         description:
  *           type: string
  *           description: Описание мероприятия
- *         location:
- *           type: string
- *           description: Место проведения
+ *         category:
+ *           type: DataTypes.ENUM('концерт', 'лекция', 'выставка', 'встреча'),
+ *           description: Тип встречи
  *         date:
  *           type: string
  *           format: date-time
@@ -51,6 +51,7 @@ const express = require('express');
 const router = express.Router();
 const Event = require('../models/event');
 
+const { Op } = require('sequelize');
 
 
 /**
@@ -71,7 +72,14 @@ const Event = require('../models/event');
  */
 router.get('/', async (req, res) => {
   try {
-    const events = await Event.findAll();
+    const { category } = req.query;
+    const where = {};
+
+    if (category) {
+      where.category = category;
+    }
+    
+    const events = await Event.findAll( where );
     res.json(events);
   } catch (err) {
     res.status(500).json({ message: 'Ошибка получения мероприятий', error: err.message });
@@ -102,7 +110,7 @@ router.get('/', async (req, res) => {
  *       404:
  *         description: Мероприятие не найдено
  */
-router.get('/:id', async (req, res) => {
+router.get('/:id',async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
     if (!event) {
@@ -133,15 +141,36 @@ router.get('/:id', async (req, res) => {
  *       400:
  *         description: Ошибка валидации
  */
-router.post('/', async (req, res) => {
-  try {
-    const { title, description, location, date, createdBy } = req.body;
 
-    if (!title || !date || !createdBy || !location) {
+const EVENTS_PER_DAY_LIMIT = parseInt(process.env.EVENTS_PER_DAY_LIMIT) || 5;
+
+router.post('/',async (req, res) => {
+  try {
+    const { title, description, category, date, createdBy } = req.body;
+
+    if (!title || !date || !createdBy) {
       return res.status(400).json({ message: 'Обязательные поля: title, location, date, createdBy' });
     }
 
-    const event = await Event.create({ title, description, location, date, createdBy });
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const eventCount = await Event.count({
+      where: {
+        createdBy,
+        createdAt: {
+          [Op.gte]: yesterday,
+        },
+      },
+    });
+
+    if (eventCount >= DAILY_EVENT_LIMIT) {
+      return res.status(429).json({
+        message: `Превышен лимит создания событий. Лимит: ${DAILY_EVENT_LIMIT} событий в сутки.`,
+      });
+    }
+
+    const event = await Event.create({ title, description, category, date, createdBy });
     res.status(201).json(event);
   } catch (err) {
     res.status(500).json({ message: 'Ошибка при создании мероприятия', error: err.message });
@@ -180,8 +209,8 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ message: 'Мероприятие не найдено' });
     }
 
-    const { title, description, location, date } = req.body;
-    await event.update({ title, description, location, date });
+    const { title, description, category, date } = req.body;
+    await event.update({ title, description, category, date });
     res.json(event);
   } catch (err) {
     res.status(500).json({ message: 'Ошибка при обновлении мероприятия', error: err.message });

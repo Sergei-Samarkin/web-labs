@@ -7,7 +7,7 @@ const userRoutes = require('./routes/users');
 const eventsRouter = require('./routes/events');
 
 
-dotenv.config({ path: 'G:/Github/web-labs/backend/.env' });
+dotenv.config();
 
 const app = express();
 app.use(express.json());
