@@ -50,6 +50,7 @@ const router = express.Router();
 const Event = require('../models/event');
 const passport = require('passport');
 const { Op } = require('sequelize');
+const checkBlacklist = require('../middleware/checkBlacklist');
 
 /**
  * @swagger
@@ -73,6 +74,7 @@ const { Op } = require('sequelize');
 const DAILY_EVENT_LIMIT = parseInt(process.env.DAILY_EVENT_LIMIT) || 5;
 router.post('/events', 
   passport.authenticate('jwt', { session: false }),
+  checkBlacklist,
   async (req, res) => {
   
     try {
@@ -136,6 +138,7 @@ router.post('/events',
  */
 router.put('/events/:id', 
   passport.authenticate('jwt', { session: false }),
+  checkBlacklist,
   async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
@@ -171,6 +174,7 @@ router.put('/events/:id',
  */
 router.delete('/events/:id', 
   passport.authenticate('jwt', { session: false }),
+  checkBlacklist,
   async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);

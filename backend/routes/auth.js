@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken')
 const User = require('../models/user');
 const dotenv = require('dotenv');
 const router = express.Router();
+const BlacklistedToken = require('../models/BlacklistedToken');
+
 
 dotenv.config();
 
@@ -142,5 +144,54 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ message: 'Ошибка авторизации', error: err.message });
         }
   });
+
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Выход пользователя из системы
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: Успешный выход из системы
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Вы успешно вышли из системы
+ *       401:
+ *         description: Токен недействителен или отсутствует
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ */
+
+const passport = require('passport');
+
+router.post('/logout',
+  passport.authenticate('jwt', { session: false }),
+  async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+      return res.status(400).json({ message: 'Токен отсутствует' });
+    }
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      await BlacklistedToken.create({
+        token,
+        expiresAt: new Date(decoded.exp * 1000), // UNIX timestamp to Date
+      });
+
+      return res.status(200).json({ message: 'Выход выполнен успешно' });
+    } catch (err) {
+      return res.status(500).json({ message: 'Ошибка при выходе', error: err.message });
+    }
+  }
+);
+
 
 module.exports = router;

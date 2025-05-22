@@ -8,6 +8,7 @@ const setupSwagger = require('./swagger');
 const authRoutes = require('./routes/auth');
 const eventsRouter = require('./routes/events');
 const pubRoutes = require('./routes/public');
+//const logoutRoute = require('./routes/logout')
 //const apiKeyMiddleware = require('./middleware/apiKey.js');
 //const apiKeyMiddleware = require('./middleware/apiKey'); 
 //const userRoutes = require('./routes/users.js');
@@ -36,6 +37,7 @@ const Event = require('./models/event');
 app.use('/events', eventsRouter);
 app.use('/auth', authRoutes);
 app.use('/public', pubRoutes);
+//app.use('logout', logoutRoute)
 
 setupSwagger(app);
 
