@@ -28,7 +28,7 @@
  *           description: Описание мероприятия
  *         category:
  *           type: DataTypes.ENUM('концерт', 'лекция', 'выставка', 'встреча'),
- *           description: Тип встречи
+ *           description: Категория события
  *         date:
  *           type: string
  *           format: date-time
@@ -45,83 +45,12 @@
  *         createdBy: 1
  */
 
-
-
 const express = require('express');
 const router = express.Router();
 const Event = require('../models/event');
-
+const passport = require('passport');
 const { Op } = require('sequelize');
-
-
-/**
- * @swagger
- * /events:
- *   get:
- *     summary: Получить список всех мероприятий
- *     tags: [Events]
- *     responses:
- *       200:
- *         description: Список мероприятий
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Event'
- */
-router.get('/', async (req, res) => {
-  try {
-    const { category } = req.query;
-    const where = {};
-
-    if (category) {
-      where.category = category;
-    }
-    
-    const events = await Event.findAll( where );
-    res.json(events);
-  } catch (err) {
-    res.status(500).json({ message: 'Ошибка получения мероприятий', error: err.message });
-  }
-});
-
-
-/**
- * @swagger
- * /events/{id}:
- *   get:
- *     summary: Получить мероприятие по ID
- *     tags: [Events]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID мероприятия
- *     responses:
- *       200:
- *         description: Найденное мероприятие
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Event'
- *       404:
- *         description: Мероприятие не найдено
- */
-router.get('/:id',async (req, res) => {
-  try {
-    const event = await Event.findByPk(req.params.id);
-    if (!event) {
-      return res.status(404).json({ message: 'Мероприятие не найдено' });
-    }
-    res.json(event);
-  } catch (err) {
-    res.status(500).json({ message: 'Ошибка получения мероприятия', error: err.message });
-  }
-});
-
+const checkBlacklist = require('../middleware/checkBlacklist');
 
 /**
  * @swagger
@@ -142,19 +71,24 @@ router.get('/:id',async (req, res) => {
  *         description: Ошибка валидации
  */
 
-const EVENTS_PER_DAY_LIMIT = parseInt(process.env.EVENTS_PER_DAY_LIMIT) || 5;
+const DAILY_EVENT_LIMIT = parseInt(process.env.DAILY_EVENT_LIMIT) || 5;
+router.post('/events', 
+  passport.authenticate('jwt', { session: false }),
+  checkBlacklist,
+  async (req, res) => {
+  
+    try {
+      const { title, description, category, date, createdBy } = req.body;
 
-router.post('/',async (req, res) => {
-  try {
-    const { title, description, category, date, createdBy } = req.body;
+      if (!title || !date || !createdBy) {
+        return res.status(400).json({ message: 'Обязательные поля: title, date, createdBy' });
+      }
 
-    if (!title || !date || !createdBy) {
-      return res.status(400).json({ message: 'Обязательные поля: title, location, date, createdBy' });
-    }
-
+    // Получаем текущую дату и дату 24 часа назад
     const now = new Date();
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
+    // Считаем количество событий, созданных этим пользователем за последние 24 часа
     const eventCount = await Event.count({
       where: {
         createdBy,
@@ -170,11 +104,11 @@ router.post('/',async (req, res) => {
       });
     }
 
-    const event = await Event.create({ title, description, category, date, createdBy });
-    res.status(201).json(event);
-  } catch (err) {
-    res.status(500).json({ message: 'Ошибка при создании мероприятия', error: err.message });
-  }
+      const event = await Event.create({ title, description, category, date, createdBy });
+      res.status(201).json(event);
+    } catch (err) {
+      res.status(500).json({ message: 'Ошибка при создании мероприятия', error: err.message });
+    }
 });
 
 
@@ -202,7 +136,10 @@ router.post('/',async (req, res) => {
  *       404:
  *         description: Мероприятие не найдено
  */
-router.put('/:id', async (req, res) => {
+router.put('/events/:id', 
+  passport.authenticate('jwt', { session: false }),
+  checkBlacklist,
+  async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
     if (!event) {
@@ -235,7 +172,10 @@ router.put('/:id', async (req, res) => {
  *       404:
  *         description: Мероприятие не найдено
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/events/:id', 
+  passport.authenticate('jwt', { session: false }),
+  checkBlacklist,
+  async (req, res) => {
   try {
     const event = await Event.findByPk(req.params.id);
     if (!event) {

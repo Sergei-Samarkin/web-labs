@@ -13,8 +13,9 @@ const options = {
   },
   apis: [
     './backend/routes/events.js',
-    './backend/routes/users.js'
-  ], // сюда попадают все роуты
+    './backend/routes/public.js',
+    './backend/routes/auth.js',
+  ], 
 };
 
 const swaggerSpec = swaggerJSDoc(options);

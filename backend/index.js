@@ -1,10 +1,18 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const passport = require('passport');
+require('./config/passport');
 const morgan = require('morgan');
 const setupSwagger = require('./swagger');
-const userRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth');
 const eventsRouter = require('./routes/events');
+const pubRoutes = require('./routes/public');
+//const logoutRoute = require('./routes/logout')
+//const apiKeyMiddleware = require('./middleware/apiKey.js');
+//const apiKeyMiddleware = require('./middleware/apiKey'); 
+//const userRoutes = require('./routes/users.js');
+
 
 
 dotenv.config();
@@ -12,6 +20,8 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 app.use(cors());
+app.use(passport.initialize());
+//app.use(apiKeyMiddleware);
 
 
 app.use(morgan(':method :url'));
@@ -23,13 +33,13 @@ const { sequelize, authenticateDB} = require('./config/db.js');
 const User = require('./models/user');
 const Event = require('./models/event');
 
-app.use('/users', userRoutes);
+//app.use('/users', userRoutes);
 app.use('/events', eventsRouter);
+app.use('/auth', authRoutes);
+app.use('/public', pubRoutes);
+//app.use('logout', logoutRoute)
 
 setupSwagger(app);
-console.log('DB_NAME:', process.env.DB_NAME);
-console.log('DB_USER:', process.env.DB_USER);
-console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
 
 app.get('/',(req, res) => {
     res.json({ message: 'Сервер работает'});
