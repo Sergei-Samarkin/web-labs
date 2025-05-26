@@ -18,8 +18,8 @@ const Event = sequelize.define('Event', {
         type: DataTypes.TEXT,
     },
     category: {
-        type: DataTypes.ENUM('концерт', 'лекция', 'выставка', 'встреча'),
-        defaultValue: 'встреча',
+        type: DataTypes.ENUM('Концерт', 'Лекция', 'Выставка', 'Встреча'),
+        defaultValue: 'Встреча',
     },
     date: {
         type: DataTypes.DATE,
