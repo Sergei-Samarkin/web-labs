@@ -61,10 +61,27 @@ dotenv.config();
  *       required: true
  *       content:
  *         application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/User'
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Имя пользователя
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email пользователя
+ *               password:
+ *                 type: string
+ *                 description: Пароль пользователя
+ *             example:
+ *               name: Иван Иванов
+ *               email: ivan@example.com
+ *               password: yourpassword123
  *     responses:
  *       201:
  *         description: Пользователь создан

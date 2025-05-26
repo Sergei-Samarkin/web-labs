@@ -14,8 +14,6 @@
  *       required:
  *         - title
  *         - date
- *         - createdBy
- *         - location
  *       properties:
  *         id:
  *           type: integer
@@ -40,7 +38,7 @@
  *         id: 1
  *         title: Хакатон 2025
  *         description: Технический конкурс
- *         location: Москва
+ *         category: Встреча
  *         date: 2025-06-01T12:00:00Z
  *         createdBy: 1
  */
@@ -58,12 +56,27 @@ const checkBlacklist = require('../middleware/checkBlacklist');
  *   post:
  *     summary: Создать новое мероприятие
  *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Event'
+ *             required:
+ *               - title
+ *               - date
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Название мероприятия
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Дата и время мероприятия
+ *             example:
+ *               title: Хакатон 2025
+ *               date: 2026-06-01T12:00:00Z
  *     responses:
  *       201:
  *         description: Мероприятие успешно создано
@@ -71,39 +84,18 @@ const checkBlacklist = require('../middleware/checkBlacklist');
  *         description: Ошибка валидации
  */
 
-const DAILY_EVENT_LIMIT = parseInt(process.env.DAILY_EVENT_LIMIT) || 5;
-router.post('/events', 
+router.post('', 
   passport.authenticate('jwt', { session: false }),
   checkBlacklist,
   async (req, res) => {
   
     try {
-      const { title, description, category, date, createdBy } = req.body;
+      const { title, description, category, date } = req.body;
+      const createdBy = req.user.id;
 
-      if (!title || !date || !createdBy) {
-        return res.status(400).json({ message: 'Обязательные поля: title, date, createdBy' });
+      if (!title || !date) {
+        return res.status(400).json({ message: 'Обязательные поля: title, date' });
       }
-
-    // Получаем текущую дату и дату 24 часа назад
-    const now = new Date();
-    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-    // Считаем количество событий, созданных этим пользователем за последние 24 часа
-    const eventCount = await Event.count({
-      where: {
-        createdBy,
-        createdAt: {
-          [Op.gte]: yesterday,
-        },
-      },
-    });
-
-    if (eventCount >= DAILY_EVENT_LIMIT) {
-      return res.status(429).json({
-        message: `Превышен лимит создания событий. Лимит: ${DAILY_EVENT_LIMIT} событий в сутки.`,
-      });
-    }
-
       const event = await Event.create({ title, description, category, date, createdBy });
       res.status(201).json(event);
     } catch (err) {
@@ -116,27 +108,53 @@ router.post('/events',
  * @swagger
  * /events/{id}:
  *   put:
- *     summary: Обновить мероприятие
+ *     summary: Обновить мероприятие по ID
  *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID мероприятия
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Event'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: Название мероприятия
+ *               description:
+ *                 type: string
+ *                 description: Описание мероприятия
+ *               category:
+ *                 type: string
+ *                 enum: [Концерт, Лекция, Выставка, Встреча]
+ *                 description: Категория мероприятия
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Дата и время мероприятия
+ *             example:
+ *               title: Обновлённое мероприятие
+ *               description: Подробности обновления
+ *               category: Лекция
+ *               date: 2025-06-01T18:00:00Z
  *     responses:
  *       200:
- *         description: Мероприятие обновлено
+ *         description: Мероприятие успешно обновлено
  *       404:
  *         description: Мероприятие не найдено
+ *       500:
+ *         description: Ошибка сервера
  */
-router.put('/events/:id', 
+
+router.put('/:id', 
   passport.authenticate('jwt', { session: false }),
   checkBlacklist,
   async (req, res) => {
@@ -158,21 +176,35 @@ router.put('/events/:id',
  * @swagger
  * /events/{id}:
  *   delete:
- *     summary: Удалить мероприятие
+ *     summary: Удалить мероприятие по ID
  *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
  *         schema:
  *           type: integer
+ *         description: ID мероприятия
  *     responses:
  *       200:
- *         description: Мероприятие удалено
+ *         description: Мероприятие успешно удалено
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Мероприятие удалено
  *       404:
  *         description: Мероприятие не найдено
+ *       500:
+ *         description: Ошибка при удалении мероприятия
  */
-router.delete('/events/:id', 
+
+router.delete('/:id', 
   passport.authenticate('jwt', { session: false }),
   checkBlacklist,
   async (req, res) => {
