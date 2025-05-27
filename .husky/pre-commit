@@ -1,9 +1,2 @@
-#!/bin/sh
-# This is a shim for the pre-commit hook that calls the PowerShell script on Windows
-if [ -f "$PWD/.husky/pre-commit.ps1" ]; then
-    powershell.exe -ExecutionPolicy Bypass -File "$PWD/.husky/pre-commit.ps1"
-    exit $?
-else
-    echo "Error: pre-commit.ps1 not found"
-    exit 1
-fi
+#!/usr/bin/env sh
+cd backend && npx lint-staged

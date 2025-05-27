@@ -13,7 +13,7 @@
     "format": "prettier --write .",
     "check": "tsc --noEmit && eslint .",
     "lint-staged": "lint-staged",
-    "prepare": "husky"
+    "prepare": "husky install"
   },
   "lint-staged": {
     "**/*.ts": [
