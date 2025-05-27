@@ -70,17 +70,8 @@ const options: Options = {
                 },
             },
         },
-        security: [
-            {
-                bearerAuth: [] as string[],
-            },
-        ],
     },
-    apis: [
-        `${__dirname}/routes/events.ts`,
-        `${__dirname}/routes/public.ts`,
-        `${__dirname}/routes/auth.ts`
-    ],
+    apis: [`${__dirname}/routes/events.ts`, `${__dirname}/routes/public.ts`, `${__dirname}/routes/auth.ts`],
 };
 
 const swaggerSpec = swaggerJsDoc({
@@ -89,10 +80,10 @@ const swaggerSpec = swaggerJsDoc({
     yaml: {
         resolve: {
             file: {
-                canRead: /.(yaml|yml|json|js|ts)$/i
-            }
-        }
-    }
+                canRead: /.(yaml|yml|json|js|ts)$/i,
+            },
+        },
+    },
 });
 
 export function setupSwagger(app: Express): void {

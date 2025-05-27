@@ -9,13 +9,12 @@ import eventsRouter from '@/routes/events';
 import pubRoutes from '@/routes/public';
 import { sequelize, authenticateDB } from '@/config/db';
 import configurePassport from '@/config/passport';
-import 'module-alias/register';
 import path from 'path';
 import moduleAlias from 'module-alias';
 
 // Set up module aliases for runtime
 moduleAlias.addAliases({
-    '@': path.join(__dirname, '..', 'src')
+    '@': path.join(__dirname, '..', 'src'),
 });
 
 dotenv.config();
@@ -27,7 +26,6 @@ configurePassport(passport);
 app.use(passport.initialize());
 app.use(morgan(':method :url'));
 
-
 const PORT = process.env.PORT || 3000;
 
 app.use('/events', eventsRouter);
@@ -38,6 +36,30 @@ setupSwagger(app);
 
 app.get('/', (req, res) => {
     res.json({ message: 'Сервер работает' });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        error: 'Not Found',
+        message: `Route ${req.originalUrl} not found`,
+    });
+});
+
+// Global error handler
+app.use((err: Error & { statusCode?: number }, req: express.Request, res: express.Response) => {
+    console.error('Error:', err);
+
+    const statusCode = err.statusCode || 500;
+    const message = err.message || 'Internal Server Error';
+
+    res.status(statusCode).json({
+        success: false,
+        error: err.name || 'Error',
+        message: message,
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
 });
 
 (async () => {

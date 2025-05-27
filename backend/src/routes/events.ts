@@ -179,6 +179,16 @@ router.put(
                 return;
             }
 
+            // Check if the current user is the creator of the event
+            if (event.createdBy !== req.user?.id) {
+                res.status(403).json({
+                    success: false,
+                    error: 'Forbidden',
+                    message: 'Вы не являетесь создателем этого мероприятия',
+                });
+                return;
+            }
+
             const { title, description, category, date } = req.body as Partial<IEvent>;
             await event.update({ title, description, category, date });
             res.json(event);
