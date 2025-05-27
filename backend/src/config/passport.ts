@@ -1,8 +1,9 @@
 import { Strategy as JwtStrategy, ExtractJwt, StrategyOptions } from 'passport-jwt';
-import User from '../models/user';
+import User from '@/models/user';
 import { PassportStatic } from 'passport';
 import dotenv from 'dotenv';
 
+// Load environment variables from the backend/.env file
 dotenv.config();
 
 interface JwtPayload {

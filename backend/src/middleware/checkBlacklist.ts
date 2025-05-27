@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import BlacklistedToken from '../models/BlacklistedToken';
+import BlacklistedToken from '@/models/BlacklistedToken';
 
 export default async function checkBlacklist(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;

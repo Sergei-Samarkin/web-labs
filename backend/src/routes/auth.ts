@@ -1,9 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import User from '../models/user';
+import User from '@/models/user';
 import dotenv from 'dotenv';
-import BlacklistedToken from '../models/BlacklistedToken';
+import BlacklistedToken from '@/models/BlacklistedToken';
 import passport from 'passport';
 
 dotenv.config();

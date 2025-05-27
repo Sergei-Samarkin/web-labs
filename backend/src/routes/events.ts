@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
-import Event from '../models/event';
+import Event from '@/models/event';
 import passport from 'passport';
-import checkBlacklist from '../middleware/checkBlacklist';
+import checkBlacklist from '@/middleware/checkBlacklist';
 
 const router = Router();
 

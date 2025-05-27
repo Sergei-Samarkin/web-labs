@@ -4,11 +4,19 @@ import cors from 'cors';
 import passport from 'passport';
 import morgan from 'morgan';
 import setupSwagger from './swagger';
-import authRoutes from './routes/auth';
-import eventsRouter from './routes/events';
-import pubRoutes from './routes/public';
-import { sequelize, authenticateDB } from './config/db';
-import configurePassport from './config/passport';
+import authRoutes from '@/routes/auth';
+import eventsRouter from '@/routes/events';
+import pubRoutes from '@/routes/public';
+import { sequelize, authenticateDB } from '@/config/db';
+import configurePassport from '@/config/passport';
+import 'module-alias/register';
+import path from 'path';
+import moduleAlias from 'module-alias';
+
+// Set up module aliases for runtime
+moduleAlias.addAliases({
+    '@': path.join(__dirname, '..', 'src')
+});
 
 dotenv.config();
 
@@ -18,6 +26,7 @@ app.use(cors());
 configurePassport(passport);
 app.use(passport.initialize());
 app.use(morgan(':method :url'));
+
 
 const PORT = process.env.PORT || 3000;
 
