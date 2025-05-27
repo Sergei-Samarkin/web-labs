@@ -28,7 +28,7 @@ const router = Router();
 router.get(
     '/events',
     async (
-        req: Request<Record<string, never>, unknown, unknown, { category?: string }>,
+        req: Request<{}, unknown, unknown, { category?: string }>,
         res: Response,
         next: NextFunction,
     ): Promise<void> => {
@@ -71,7 +71,9 @@ router.get(
  *       404:
  *         description: Мероприятие не найдено
  */
-router.get('/events/:id', async (req: Request<{ id: string }>, res: Response): Promise<void> => {
+// Get event by ID
+router.get('/events/:id', async (req: Request, res: Response, next: NextFunction) => {
+    const { id } = req.params;
     try {
         const event = await Event.findByPk(req.params.id);
         if (!event) {

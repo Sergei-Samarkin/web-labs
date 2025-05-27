@@ -1,6 +1,7 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import { sequelize } from '@/config/db'; 
+import { DataTypes, Model } from 'sequelize';
+import type { Optional } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import { sequelize } from '@/config/db';
 
 interface UserAttributes {
     id: number;
@@ -59,5 +60,7 @@ User.beforeCreate(async (user) => {
         user.password = await bcrypt.hash(user.password, 10);
     }
 });
+
+// Хуки и ассоциации могут быть добавлены здесь
 
 export default User;

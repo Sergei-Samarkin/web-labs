@@ -21,7 +21,15 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+// Configure CORS to allow credentials and required headers
+app.use(cors({
+    origin: 'http://localhost:4000',
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Handle preflight requests
+app.options('*', cors());
 configurePassport(passport);
 app.use(passport.initialize());
 app.use(morgan(':method :url'));

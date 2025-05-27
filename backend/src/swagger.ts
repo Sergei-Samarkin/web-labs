@@ -18,6 +18,11 @@ const options: Options = {
                 description: 'Development server',
             },
         ],
+        security: [
+            {
+                bearerAuth: []
+            }
+        ],
         components: {
             securitySchemes: {
                 bearerAuth: {

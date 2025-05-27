@@ -1,4 +1,12 @@
-import { Router, Request, Response, NextFunction, RequestHandler } from 'express';
+import { Router, Request as ExpressRequest, Response, NextFunction, RequestHandler } from 'express';
+import { IUser } from '@/types/express';
+
+// Extend the Express Request type to include the user property
+interface AuthenticatedRequest extends ExpressRequest {
+    user?: IUser;
+}
+
+type Request = AuthenticatedRequest;
 import Event from '@/models/event';
 import passport from 'passport';
 import checkBlacklist from '@/middleware/checkBlacklist';
@@ -102,7 +110,7 @@ router.post(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { title, description, category, date } = req.body as Partial<IEvent>;
-            const createdBy = req.user?.id;
+            const createdBy = req.user?.id as number;
 
             if (!title || !date) {
                 res.status(400).json({ message: 'Обязательные поля: title, date' });
@@ -180,7 +188,7 @@ router.put(
             }
 
             // Check if the current user is the creator of the event
-            if (event.createdBy !== req.user?.id) {
+            if (!req.user || event.createdBy !== req.user.id) {
                 res.status(403).json({
                     success: false,
                     error: 'Forbidden',

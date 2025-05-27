@@ -1,12 +1,19 @@
-import { User as UserModel } from '@/models/user';
+import { Model } from 'sequelize';
+
+// Define a minimal user interface
+export interface IUser extends Model {
+    id: number;
+    email: string;
+    name: string;
+    // Add other user properties as needed
+}
 
 declare global {
     namespace Express {
-        // Extend the User interface to include the id property
-        interface User extends Partial<UserModel> {
-            id?: number;
-        }
+        // Extend Express's User interface
+        interface User extends IUser {}
 
+        // Extend Express's Request interface
         interface Request {
             user?: User;
         }

@@ -213,33 +213,70 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction): P
  *         description: Внутренняя ошибка сервера
  */
 
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Выход пользователя из системы
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Успешный выход из системы
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Вы успешно вышли из системы
+ *       401:
+ *         description: Токен недействителен или отсутствует
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ */
 router.post(
     '/logout',
-    passport.authenticate('jwt', { session: false }),
+    passport.authenticate('jwt', { session: false, failWithError: true }),
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        const token = req.headers.authorization?.split(' ')[1];
-
-        if (!token) {
-            res.status(400).json({ message: 'Токен отсутствует' });
-            return;
-        }
-
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as CustomJwtPayload;
+            const authHeader = req.headers.authorization || req.headers.Authorization as string;
+            
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                res.status(401).json({ message: 'Токен отсутствует или неверный формат' });
+                return;
+            }
 
+            const token = authHeader.split(' ')[1];
+            
+            // Проверяем, не заблокирован ли уже токен
+            const existingToken = await BlacklistedToken.findOne({ where: { token } });
+            if (existingToken) {
+                res.status(200).json({ message: 'Токен уже недействителен' });
+                return;
+            }
+
+            // Верифицируем токен
+            const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as CustomJwtPayload;
+            
             await BlacklistedToken.create({
                 token,
                 expiresAt: new Date(decoded.exp! * 1000),
             });
 
             res.status(200).json({ message: 'Выход выполнен успешно' });
-            return;
         } catch (err: unknown) {
             const error = err as Error;
-            res.status(500).json({ message: 'Ошибка при выходе', error: error.message });
-            next(error);
+            if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+                res.status(401).json({ message: 'Недействительный токен' });
+            } else {
+                res.status(500).json({ message: 'Ошибка при выходе', error: error.message });
+                next(error);
+            }
         }
-    },
+    }
 );
 
 export default router;
