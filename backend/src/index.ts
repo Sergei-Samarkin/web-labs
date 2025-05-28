@@ -7,6 +7,7 @@ import setupSwagger from './swagger';
 import authRoutes from '@/routes/auth';
 import eventsRouter from '@/routes/events';
 import pubRoutes from '@/routes/public';
+import usersRouter from '@/routes/users';
 import { sequelize, authenticateDB } from '@/config/db';
 import configurePassport from '@/config/passport';
 import path from 'path';
@@ -23,9 +24,11 @@ const app = express();
 app.use(express.json());
 // Configure CORS to allow credentials and required headers
 app.use(cors({
-    origin: 'http://localhost:4000',
+    origin: ['http://localhost:4000', 'http://localhost:5173'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    exposedHeaders: ['Content-Length', 'Content-Type']
 }));
 
 // Handle preflight requests
@@ -39,6 +42,7 @@ const PORT = process.env.PORT || 3000;
 app.use('/events', eventsRouter);
 app.use('/auth', authRoutes);
 app.use('/public', pubRoutes);
+app.use('/api/users', usersRouter);
 
 setupSwagger(app);
 

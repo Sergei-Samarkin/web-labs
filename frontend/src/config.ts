@@ -1,5 +1,11 @@
+// Log environment variables for debugging
+console.log('Environment variables:', import.meta.env);
+
 // API configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+export const API_URL = ''; // Empty because we're using direct proxy routes
+
+// Log the final API URL
+console.log('Using API URL:', API_URL);
 
 // Auth configuration
 export const TOKEN_KEY = 'token';

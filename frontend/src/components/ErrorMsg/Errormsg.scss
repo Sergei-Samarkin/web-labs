@@ -1,0 +1,51 @@
+.errorContainer {
+    position: fixed; // Фиксированное позиционирование
+    bottom: 20px; // Отступ снизу
+    right: 20px; // Отступ справа
+    background-color: #f8d7da; // Красный фон для ошибок
+    color: #721c24; // Темно-красный текст
+    border: 1px solid #f5c6cb; // Красная рамка
+    border-radius: 4px;
+    padding: 0.75rem 1.25rem;
+    z-index: 1000; // Поверх других элементов
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    max-width: 400px; // Ограничение ширины
+    animation: fadeIn 0.3s ease-out; // Анимация появления
+}
+
+.errorContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.errorMessage {
+    margin-right: 1rem; // Отступ справа от кнопки
+    flex-grow: 1;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    color: #721c24;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+        color: #491217;
+    }
+}
+
+// Анимация появления
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

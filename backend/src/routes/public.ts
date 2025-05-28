@@ -25,8 +25,9 @@ const router = Router();
  *               items:
  *                 $ref: '#/components/schemas/Event'
  */
+// Handle both /public and /public/events for backward compatibility
 router.get(
-    '/events',
+    '/',
     async (
         req: Request<{}, unknown, unknown, { category?: string }>,
         res: Response,
@@ -40,11 +41,43 @@ router.get(
                 where.category = category;
             }
 
-            const events = await Event.findAll({ where });
-            res.json(events);
+            const events = await Event.findAll({ 
+              where,
+              attributes: [
+                'id',
+                'title',
+                'description',
+                'category',
+                'date',
+                'createdBy',
+                'createdAt',
+                'updatedAt'
+              ]
+            });
+            
+            // Ensure createdBy is included in the response
+            const formattedEvents = events.map(event => ({
+              ...event.get({ plain: true }),
+              createdBy: event.createdBy || null
+            }));
+            
+            res.json(formattedEvents);
         } catch (error) {
             next(error);
         }
+    },
+);
+
+// Keep the old route for backward compatibility
+router.get(
+    '/events',
+    async (
+        req: Request<{}, unknown, unknown, { category?: string }>,
+        res: Response,
+        next: NextFunction,
+    ) => {
+        // Redirect to the new endpoint
+        res.redirect(307, '/public');
     },
 );
 
