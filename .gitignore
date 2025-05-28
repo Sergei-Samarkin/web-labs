@@ -2,7 +2,8 @@
 node_modules/
 
 # Environment variables
-.env
+frontend/.env
+backend/.env
 
 # Editor directories and files
 .DS_Store
