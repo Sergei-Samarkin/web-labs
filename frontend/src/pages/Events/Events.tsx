@@ -5,10 +5,10 @@ import type { Event } from '../../api/eventService';
 import { api } from '../../api/authService';
 import { useAuth } from '../../components/AuthContext';
 import styles from './Events.module.scss';
-import { Button, Table, Space, message, Tag, Tooltip, App, Alert } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled, MailOutlined, LoadingOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
+import { Button, message, Alert, App, Spin } from 'antd';
+import { PlusOutlined, ExclamationCircleFilled } from '@ant-design/icons';
 import EventForm from '../../components/EventForm/index';
+import EventCard from '../../components/EventCard/EventCard';
 
 interface UserEmailCache {
   [key: number]: string;
@@ -17,10 +17,12 @@ interface UserEmailCache {
 
 export const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [userEmails, setUserEmails] = useState<UserEmailCache>({});
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const { user } = useAuth(); // Получаем информацию о текущем пользователе
   const { modal } = App.useApp(); // Используем App.useApp() для доступа к контексту
   const [actionError, setActionError] = useState<{ code: number; message: string } | null>(null);
@@ -198,6 +200,42 @@ export const EventsPage = () => {
     }
   };
 
+  // Фильтрация мероприятий по категориям
+  const filterEventsByCategories = (eventsList: Event[], categories: string[]) => {
+    if (categories.length === 0) {
+      return eventsList;
+    }
+    return eventsList.filter(event => categories.includes(event.category));
+  };
+
+  // Обновление отфильтрованных мероприятий при изменении событий или категорий
+  useEffect(() => {
+    setFilteredEvents(filterEventsByCategories(events, selectedCategories));
+  }, [events, selectedCategories]);
+
+  // Получение всех уникальных категорий
+  const getAllCategories = (): string[] => {
+    // Статический список всех возможных категорий в системе
+    const allSystemCategories = ['Концерт', 'Лекция', 'Выставка', 'Встреча'];
+    return allSystemCategories;
+  };
+
+  // Обработка выбора категории
+  const handleCategoryToggle = (category: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(category)) {
+        return prev.filter(c => c !== category);
+      } else {
+        return [...prev, category];
+      }
+    });
+  };
+
+  // Очистка всех фильтров
+  const clearFilters = () => {
+    setSelectedCategories([]);
+  };
+
   useEffect(() => {
     fetchEvents();
   }, [user]); // Добавляем user в зависимости чтобы перезагружать мероприятия при изменении статуса авторизации
@@ -289,87 +327,6 @@ export const EventsPage = () => {
     fetchEvents();
   };
 
-  const columns: ColumnsType<Event> = [
-    {
-      title: 'Название',
-      dataIndex: 'title',
-      key: 'title',
-      sorter: (a, b) => a.title.localeCompare(b.title),
-    },
-    {
-      title: 'Описание',
-      dataIndex: 'description',
-      key: 'description',
-      ellipsis: true,
-    },
-    {
-      title: 'Дата',
-      dataIndex: 'date',
-      key: 'date',
-      render: (date) => new Date(date).toLocaleString(),
-      sorter: (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    },
-    {
-      title: 'Категория',
-      dataIndex: 'category',
-      key: 'category',
-      filters: [
-        { text: 'Концерт', value: 'Концерт' },
-        { text: 'Лекция', value: 'Лекция' },
-        { text: 'Выставка', value: 'Выставка' },
-        { text: 'Встреча', value: 'Встреча' },
-      ],
-      onFilter: (value, record) => record.category === value,
-    },
-    {
-      title: 'Создатель',
-      dataIndex: 'createdBy',
-      key: 'creator',
-      render: (createdBy?: number) => {
-        if (!createdBy) return null;
-        
-        const isLoading = loadingEmails[createdBy] === true;
-        const email = userEmails[createdBy];
-        
-        if (isLoading) {
-          return (
-            <Tag icon={<LoadingOutlined spin />} color="processing">
-              Загрузка...
-            </Tag>
-          );
-        }
-        
-        return (
-          <Tooltip title={email}>
-            <Tag icon={<MailOutlined />} color="blue">
-              {email || `user_${createdBy}@example.com`}
-            </Tag>
-          </Tooltip>
-        );
-      },
-    },
-    {
-      title: 'Действия',
-      key: 'actions',
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-            title="Редактировать"
-          />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record.id)}
-            title="Удалить"
-          />
-        </Space>
-      ),
-    },
-  ];
 
   return (
     <div className={styles.eventsContainer}>
@@ -390,7 +347,6 @@ export const EventsPage = () => {
           {user ? 'Мои мероприятия' : 'Все мероприятия'}
         </h1>
         <div className={styles.actions}>
-
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -401,15 +357,91 @@ export const EventsPage = () => {
         </div>
       </div>
 
-      <div className={styles.tableContainer}>
-        <Table
-          columns={columns}
-          dataSource={events}
-          rowKey={(record) => record.id.toString()}
-          loading={loading}
-          pagination={{ pageSize: 10 }}
-          className={styles.eventsTable}
-        />
+      {/* Фильтры по категориям */}
+      <div className={styles.filtersContainer}>
+        <div className={styles.filtersHeader}>
+          <span className={styles.filtersTitle}>Фильтры по категориям:</span>
+          {selectedCategories.length > 0 && (
+            <Button 
+              type="link" 
+              size="small" 
+              onClick={clearFilters}
+              className={styles.clearFilters}
+            >
+              Очистить все
+            </Button>
+          )}
+        </div>
+        <div className={styles.categoryButtons}>
+          {getAllCategories().map(category => (
+            <Button
+              key={category}
+              type={selectedCategories.includes(category) ? "primary" : "default"}
+              size="small"
+              onClick={() => handleCategoryToggle(category)}
+              className={selectedCategories.includes(category) ? styles.activeCategory : ''}
+              style={{
+                backgroundColor: selectedCategories.includes(category) ? '#0d4f8c' : 'var(--card-bg)',
+                borderColor: selectedCategories.includes(category) ? '#0d4f8c' : 'var(--border-color)',
+                color: selectedCategories.includes(category) ? 'white' : '#c0c0c0',
+                transition: 'all 0.3s ease',
+                outline: 'none',
+                boxShadow: 'none'
+              }}
+              onMouseDown={(e) => e.currentTarget.style.outline = 'none'}
+              onBlur={(e) => e.currentTarget.style.outline = 'none'}
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className={styles.cardsContainer}>
+        {loading ? (
+          <div className={styles.loadingContainer}>
+            <Spin size="large" />
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className={styles.emptyState}>
+            <p>Мероприятий с выбранными категориями нет</p>
+          </div>
+        ) : (
+          <div 
+            className={styles.cardsGrid}
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              marginLeft: '-0.75rem',
+              marginRight: '-0.75rem',
+              alignItems: 'stretch'
+            }}
+          >
+            {filteredEvents.map(event => (
+              <div
+                key={event.id}
+                style={{
+                  flex: '0 0 calc(25% - 1.5rem)',
+                  minWidth: '270px',
+                  paddingLeft: '0.75rem',
+                  paddingRight: '0.75rem',
+                  paddingTop: '0.75rem',
+                  paddingBottom: '0.75rem',
+                  marginBottom: '1.5rem',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <EventCard
+                  event={event}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  userEmail={event.createdBy ? userEmails[event.createdBy] : undefined}
+                  isLoadingEmail={event.createdBy ? loadingEmails[event.createdBy] : false}
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <EventForm

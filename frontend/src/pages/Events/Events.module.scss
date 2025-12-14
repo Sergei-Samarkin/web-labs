@@ -11,7 +11,7 @@
 }
 
 .eventsContainer {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
   min-height: 100vh;
@@ -92,86 +92,113 @@
     }
   }
 
-  .eventsTable {
+  .filtersContainer {
     background: var(--card-bg);
-    border-radius: 8px;
-    overflow: hidden;
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 2rem;
 
-    :global {
-      .ant-table {
-        background: transparent;
+    .filtersHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+
+      .filtersTitle {
         color: var(--text-color);
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .clearFilters {
+        color: var(--primary-color) !important;
+        padding: 0 !important;
+        height: auto !important;
         
-        .ant-table-thead > tr > th {
-          background: var(--card-bg);
-          color: var(--text-color);
-          border-bottom: 1px solid var(--border-color);
-          font-weight: 600;
+        &:hover {
+          color: #40a9ff !important;
         }
-        
-        .ant-table-tbody > tr > td {
-          border-bottom: 1px solid var(--border-color);
-          color: var(--text-color);
-        }
-        
-        .ant-table-tbody > tr.ant-table-row:hover > td {
-          background: var(--hover-color);
-        }
-        
-        .ant-table-pagination.ant-pagination {
-          color: var(--text-color);
-          
-          .ant-pagination-item {
-            background: var(--card-bg);
-            border-color: var(--border-color);
-            
-            a {
-              color: var(--text-color);
-            }
-            
-            &:hover, &.ant-pagination-item-active {
-              border-color: var(--primary-color);
-              
-              a {
-                color: var(--primary-color);
-              }
-            }
+      }
+    }
+
+    .categoryButtons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      :global {
+        .ant-btn {
+          background-color: var(--card-bg) !important;
+          border-color: var(--border-color) !important;
+          color: var(--text-secondary) !important;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background-color: var(--hover-color) !important;
+            border-color: var(--primary-color) !important;
+            color: var(--text-color) !important;
           }
-          
-          .ant-pagination-prev,
-          .ant-pagination-next,
-          .ant-pagination-jump-prev,
-          .ant-pagination-jump-next {
-            button {
-              color: var(--text-color);
-              background: var(--card-bg);
-              border-color: var(--border-color);
-              
-              &:hover {
-                color: var(--primary-color);
-                border-color: var(--primary-color);
-              }
-            }
-          }
-          
-          .ant-pagination-options-quick-jumper {
-            color: var(--text-color);
-            
-            input {
-              background: var(--bg-color);
-              border-color: var(--border-color);
-              color: var(--text-color);
-              
-              &:hover, &:focus {
-                border-color: var(--primary-color);
-                box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-              }
+
+          &.activeCategory {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            color: white !important;
+
+            &:hover {
+              background-color: #40a9ff !important;
+              border-color: #40a9ff !important;
             }
           }
         }
       }
+    }
+  }
+
+  .cardsContainer {
+    background: transparent;
+    border-radius: 8px;
+    min-height: 400px;
+  }
+
+  .loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+  }
+
+  .emptyState {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .cardsGrid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 1.5rem !important;
+    width: 100% !important;
+    
+    // Адаптивность для разного количества карточек
+    @media (min-width: 1600px) {
+      grid-template-columns: repeat(5, 1fr) !important;
+    }
+    
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+    
+    @media (max-width: 900px) {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
+    
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
     }
   }
 }
@@ -202,21 +229,14 @@
       }
     }
 
-    .tableContainer {
+    .cardsContainer {
       flex: 1;
-      overflow: auto;
-      background: var(--card-bg);
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      background: transparent;
     }
 
-    .eventsTable {
-      width: 100%;
-      
-      .ant-table {
-        border-radius: 8px;
-        overflow: hidden;
-      }
+    .cardsGrid {
+      grid-template-columns: 1fr;
+      gap: 1rem;
     }
   }
 }
