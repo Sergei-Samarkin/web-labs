@@ -114,7 +114,7 @@ export const updateEvent = async (id: number, eventData: Partial<CreateEventData
 
 // Delete event
 export const deleteEvent = async (id: number): Promise<void> => {
-  await api.delete(`/events/${id}`);
+  await api.delete(`/api/events/${id}`);
 };
 
 export default {

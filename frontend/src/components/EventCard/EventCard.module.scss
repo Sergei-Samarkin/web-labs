@@ -1,0 +1,175 @@
+// Dark theme variables
+:root {
+  --bg-color: #1a1a1a;
+  --card-bg: #2d2d2d;
+  --text-color: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --border-color: #404040;
+  --hover-color: #3a3a3a;
+  --primary-color: #1890ff;
+  --danger-color: #ff4d4f;
+}
+
+.eventCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 250px; // Увеличенная минимальная высота для вертикального размера
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: var(--primary-color);
+  }
+
+  .cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    gap: 0.5rem;
+
+    .title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      line-height: 1.3;
+      flex: 1;
+      min-height: 1.4em;
+    }
+
+    .category {
+      flex-shrink: 0;
+      font-size: 0.75rem;
+      margin: 0;
+    }
+  }
+
+  .description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+    flex: 1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+  }
+
+  .date {
+    color: var(--text-color);
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+
+    strong {
+      color: var(--text-color);
+    }
+  }
+
+  .creator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+
+    strong {
+      color: var(--text-color);
+      white-space: nowrap;
+    }
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+
+    .editButton {
+      flex: 1;
+      background-color: var(--card-bg);
+      border-color: var(--border-color);
+      color: var(--text-color);
+
+      &:hover {
+        background-color: var(--hover-color);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+    }
+
+    .deleteButton {
+      flex: 1;
+
+      &:hover {
+        background-color: #ff7875;
+        border-color: #ff7875;
+      }
+    }
+  }
+}
+
+// Responsive styles for cards
+@media (max-width: 1200px) {
+  .eventCard {
+    .cardHeader {
+      .title {
+        font-size: 1rem;
+      }
+    }
+
+    .description {
+      font-size: 0.85rem;
+    }
+
+    .actions {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .eventCard {
+    padding: 0.75rem;
+
+    .cardHeader {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+
+      .title {
+        font-size: 0.95rem;
+      }
+
+      .category {
+        align-self: flex-end;
+      }
+    }
+
+    .description {
+      font-size: 0.8rem;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+    }
+
+    .date,
+    .creator {
+      font-size: 0.8rem;
+    }
+  }
+}
