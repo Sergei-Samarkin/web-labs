@@ -19,6 +19,7 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
     public email!: string;
     public password!: string;
     public readonly createdAt!: Date;
+    
 }
 
 User.init(
