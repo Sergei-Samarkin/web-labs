@@ -412,23 +412,20 @@ export const EventsPage = () => {
             style={{
               display: 'flex',
               flexWrap: 'wrap',
-              marginLeft: '-0.75rem',
-              marginRight: '-0.75rem',
-              alignItems: 'stretch'
+              gap: '1.5rem',
+              width: '100%',
+              alignItems: 'stretch',
+              marginTop: '1.5rem'
             }}
           >
             {filteredEvents.map(event => (
               <div
                 key={event.id}
                 style={{
-                  flex: '0 0 calc(25% - 1.5rem)',
+                  flex: '0 0 calc(25% - 1.125rem)',
                   minWidth: '270px',
-                  paddingLeft: '0.75rem',
-                  paddingRight: '0.75rem',
-                  paddingTop: '0.75rem',
-                  paddingBottom: '0.75rem',
-                  marginBottom: '1.5rem',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  marginBottom: '1.5rem'
                 }}
               >
                 <EventCard

@@ -185,7 +185,7 @@
     
     // Адаптивность для разного количества карточек
     @media (min-width: 1600px) {
-      grid-template-columns: repeat(5, 1fr) !important;
+      grid-template-columns: repeat(4, 1fr) !important;
     }
     
     @media (max-width: 1200px) {
