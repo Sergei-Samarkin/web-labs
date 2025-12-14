@@ -71,7 +71,7 @@ export interface IEvent {
 
 /**
  * @swagger
- * /events:
+ * /api/events:
  *   post:
  *     summary: Создать новое мероприятие
  *     tags: [Events]
@@ -104,7 +104,7 @@ export interface IEvent {
  */
 
 router.post(
-    '',
+    '/',
     passport.authenticate('jwt', { session: false }),
     checkBlacklist as unknown as RequestHandler,
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -128,7 +128,60 @@ router.post(
 
 /**
  * @swagger
- * /events/{id}:
+ * /api/events/my-events:
+ *   get:
+ *     summary: Получить мероприятия текущего пользователя
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Список мероприятий текущего пользователя
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Event'
+ *       401:
+ *         description: Не авторизован
+ */
+router.get(
+    '/my-events',
+    passport.authenticate('jwt', { session: false }),
+    checkBlacklist as unknown as RequestHandler,
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.user?.id as number;
+            const events = await Event.findAll({ 
+                where: { createdBy: userId },
+                attributes: [
+                    'id',
+                    'title',
+                    'description',
+                    'category',
+                    'date',
+                    'createdBy',
+                    'createdAt',
+                    'updatedAt'
+                ]
+            });
+            
+            const formattedEvents = events.map(event => ({
+                ...event.get({ plain: true }),
+                createdBy: event.createdBy || null
+            }));
+            
+            res.json(formattedEvents);
+        } catch (error) {
+            next(error);
+        }
+    },
+);
+
+/**
+ * @swagger
+ * /api/events/{id}:
  *   put:
  *     summary: Обновить мероприятие по ID
  *     tags: [Events]
@@ -209,7 +262,7 @@ router.put(
 
 /**
  * @swagger
- * /events/{id}:
+ * /api/events/{id}:
  *   delete:
  *     summary: Удалить мероприятие по ID
  *     tags: [Events]
@@ -235,6 +288,8 @@ router.put(
  *                   example: Мероприятие удалено
  *       404:
  *         description: Мероприятие не найдено
+ *       401:
+ *         description: Не авторизован
  *       500:
  *         description: Ошибка при удалении мероприятия
  */
@@ -247,6 +302,16 @@ router.delete(
             const event = await Event.findByPk(req.params.id);
             if (!event) {
                 res.status(404).json({ message: 'Мероприятие не найдено' });
+                return;
+            }
+
+            // Check if the current user is the creator of the event
+            if (!req.user || event.createdBy !== req.user.id) {
+                res.status(403).json({
+                    success: false,
+                    error: 'Forbidden',
+                    message: 'Вы не являетесь создателем этого мероприятия',
+                });
                 return;
             }
 

@@ -61,15 +61,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setError(null);
       const { user } = await authLogin(credentials);
       setUser(user);
-      navigate('/');
+      // Успешный вход - навигация выполняется в компоненте
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
+      // НЕ устанавливаем пользователя при ошибке
       throw err;
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, []);
 
   // Handle user registration
   const register = useCallback(async (userData: RegisterData) => {

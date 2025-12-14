@@ -39,8 +39,8 @@ app.use(morgan(':method :url'));
 
 const PORT = process.env.PORT || 3000;
 
-app.use('/events', eventsRouter);
-app.use('/auth', authRoutes);
+app.use('/api/events', eventsRouter);
+app.use('/api/auth', authRoutes);
 app.use('/public', pubRoutes);
 app.use('/api/users', usersRouter);
 

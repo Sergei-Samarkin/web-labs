@@ -74,7 +74,7 @@ const Header = () => {
           </Link>
           {user ? (
             <>
-              <span style={{ margin: '0 1rem' }}>{user.email}</span>
+              <span style={{ margin: '0 1rem', color: '#e1e1e1' }}>{user.email}</span>
               <button 
                 onClick={handleLogout}
                 style={{

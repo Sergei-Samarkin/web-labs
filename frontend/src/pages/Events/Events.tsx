@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 // import { useNavigate } from 'react-router-dom';
-import { getEvents, deleteEvent } from '../../api/eventService';
+import { getEvents, getMyEvents, deleteEvent } from '../../api/eventService';
 import type { Event } from '../../api/eventService';
 import { api } from '../../api/authService';
+import { useAuth } from '../../components/AuthContext';
 import styles from './Events.module.scss';
-import { Button, Table, Space, Modal, message, Tag, Tooltip } from 'antd';
+import { Button, Table, Space, message, Tag, Tooltip, App, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleFilled, MailOutlined, LoadingOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import EventForm from '../../components/EventForm/index';
@@ -13,7 +14,6 @@ interface UserEmailCache {
   [key: number]: string;
 }
 
-const { confirm } = Modal;
 
 export const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -21,6 +21,9 @@ export const EventsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [userEmails, setUserEmails] = useState<UserEmailCache>({});
+  const { user } = useAuth(); // Получаем информацию о текущем пользователе
+  const { modal } = App.useApp(); // Используем App.useApp() для доступа к контексту
+  const [actionError, setActionError] = useState<{ code: number; message: string } | null>(null);
   // const navigate = useNavigate(); // Will be used for future navigation
 
   // Fetch user email by ID
@@ -43,6 +46,7 @@ export const EventsPage = () => {
   
   const updateUserEmails = async () => {
     console.log('[updateUserEmails] Starting to update user emails');
+    console.log('[updateUserEmails] Current events:', events);
     
     // Get all non-null/undefined createdBy values
     const userIds = [...new Set(
@@ -121,9 +125,21 @@ export const EventsPage = () => {
     console.log('[fetchEvents] Starting to fetch events');
     try {
       setLoading(true);
-      console.log('[fetchEvents] Calling getEvents()...');
-      const data = await getEvents();
-      console.log('[fetchEvents] getEvents response:', data);
+      
+      // Если пользователь авторизован, показываем только его мероприятия
+      // Иначе показываем все мероприятия
+      console.log('[fetchEvents] User auth status:', { isAuthenticated: !!user, userId: user?.id });
+      
+      let data: Event[];
+      if (user) {
+        console.log('[fetchEvents] User is authenticated, fetching user events...');
+        data = await getMyEvents();
+      } else {
+        console.log('[fetchEvents] User is not authenticated, fetching all events...');
+        data = await getEvents();
+      }
+      
+      console.log('[fetchEvents] Events response:', data);
       
       // Log the API instance configuration
       console.log('[fetchEvents] API base URL:', api.defaults.baseURL);
@@ -166,8 +182,8 @@ export const EventsPage = () => {
         })));
         
         setEvents(eventsWithKeys);
-        // Update user emails in the background
-        updateUserEmails();
+        
+        console.log('[fetchEvents] Events set successfully');
       } else {
         console.error('Expected array but got:', data);
         setEvents([]);
@@ -184,10 +200,24 @@ export const EventsPage = () => {
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [user]); // Добавляем user в зависимости чтобы перезагружать мероприятия при изменении статуса авторизации
+
+  // Добавляем useEffect для обновления email после загрузки событий
+  useEffect(() => {
+    if (events.length > 0) {
+      console.log('[useEffect] Events loaded, updating user emails...');
+      updateUserEmails();
+    }
+  }, [events]); // Обновляем email при изменении событий
 
   const handleDelete = (id: number) => {
-    confirm({
+    // Проверяем авторизацию пользователя
+    if (!user) {
+      setActionError({ code: 401, message: 'Требуется авторизация для удаления мероприятия' });
+      return;
+    }
+
+    modal.confirm({
       title: 'Удалить мероприятие?',
       icon: <ExclamationCircleFilled />,
       content: 'Вы уверены, что хотите удалить это мероприятие?',
@@ -199,20 +229,51 @@ export const EventsPage = () => {
           await deleteEvent(id);
           message.success('Мероприятие успешно удалено');
           fetchEvents();
-        } catch (error) {
-          message.error('Не удалось удалить мероприятие');
+          setActionError(null); // Сбрасываем ошибку при успехе
+        } catch (error: any) {
           console.error('Error deleting event:', error);
+          
+          // Обрабатываем разные типы ошибок
+          if (error.response) {
+            const { status, data } = error.response;
+            setActionError({ 
+              code: status, 
+              message: data.message || 'Не удалось удалить мероприятие' 
+            });
+          } else if (error.request) {
+            setActionError({ 
+              code: 0, 
+              message: 'Ошибка сети. Проверьте подключение к интернету' 
+            });
+          } else {
+            setActionError({ 
+              code: 500, 
+              message: 'Внутренняя ошибка приложения' 
+            });
+          }
         }
       },
     });
   };
 
   const handleEdit = (event: Event) => {
+    // Проверяем авторизацию пользователя
+    if (!user) {
+      setActionError({ code: 401, message: 'Требуется авторизация для редактирования мероприятия' });
+      return;
+    }
+
     setEditingEvent(event);
     setIsModalOpen(true);
   };
 
   const handleCreate = () => {
+    // Проверяем авторизацию пользователя
+    if (!user) {
+      setActionError({ code: 401, message: 'Требуется авторизация для создания мероприятия' });
+      return;
+    }
+
     setEditingEvent(null);
     setIsModalOpen(true);
   };
@@ -312,8 +373,22 @@ export const EventsPage = () => {
 
   return (
     <div className={styles.eventsContainer}>
+      {/* Отображение ошибок действий */}
+      {actionError && (
+        <Alert
+          message={`Ошибка ${actionError.code}`}
+          description={actionError.message}
+          type="error"
+          closable
+          onClose={() => setActionError(null)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <div className={styles.header}>
-        <h1>Мероприятия</h1>
+        <h1>
+          {user ? 'Мои мероприятия' : 'Все мероприятия'}
+        </h1>
         <div className={styles.actions}>
 
           <Button

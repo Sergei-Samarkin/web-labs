@@ -66,8 +66,12 @@ export const RegisterPage = () => {
 
     if (!formData.email) {
       newErrors.email = 'Email обязателен';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Некорректный формат email';
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
+      newErrors.email = 'Email должен содержать действительное доменное имя';
+    } else if (formData.email === '123@123.123') {
+      newErrors.email = 'Email не должен содержать только цифры';
     }
 
     if (!formData.password) {

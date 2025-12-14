@@ -7,31 +7,30 @@ import NotFound from './pages/NotFound/NotFound';
 import Header from './components/Layout/Header.tsx';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './components/AuthContext.tsx';
+import { App as AntdApp } from 'antd';
 // import Footer from './components/Layout/Footer'
 
 function App() {
   return (
-    <AuthProvider> { /* Оборачиваем все в AuthProvider */}
-      <div className="app-wrapper"> {/* Общая обертка для стилизации */} 
-        <Header /> {/* Раскомментировали и убрали пропсы, так как Header теперь берет все из AuthContext */}
-        <main className="main-content" style={{ paddingTop: '80px' }}> {/* Основной контент с отступом под шапку */} 
-          <Routes>
-            {/* Публичные маршруты */}
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/events" element={<Events />} />
-            
-            {/* Защищенные маршруты */}
-            <Route element={<ProtectedRoute />}>
-              {/* Здесь можно добавить защищенные маршруты */}
-            </Route>
+    <AuthProvider>
+      <AntdApp>
+        <div className="app-wrapper">
+          <Header />
+          <main className="main-content" style={{ paddingTop: '80px' }}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/events" element={<Events />} />
+              
+              <Route element={<ProtectedRoute />}>
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-        {/* <Footer /> */}
-      </div>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+        </div>
+      </AntdApp>
     </AuthProvider>
   )
 }

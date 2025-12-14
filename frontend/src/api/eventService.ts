@@ -61,6 +61,39 @@ export const getEvents = async (): Promise<Event[]> => {
   }
 };
 
+// Get current user's events
+export const getMyEvents = async (): Promise<Event[]> => {
+  console.log('getMyEvents: Making API call to /api/events/my-events');
+  try {
+    const response = await api.get<Event[]>('/api/events/my-events');
+    console.log('getMyEvents: API response received', {
+      status: response.status,
+      statusText: response.statusText,
+      data: response.data
+    });
+    
+    // Ensure we always return an array, even if the response is null/undefined
+    if (!response || !response.data) {
+      console.error('Invalid response format:', response);
+      return [];
+    }
+    
+    const result = Array.isArray(response.data) ? response.data : [];
+    console.log('getMyEvents: Returning', result.length, 'user events');
+    return result;
+  } catch (error: unknown) {
+    const errorInfo = {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      response: (error as any)?.response ? {
+        status: (error as any).response.status,
+        data: (error as any).response.data
+      } : 'No response'
+    };
+    console.error('Error in getMyEvents:', errorInfo);
+    return [];
+  }
+};
+
 // Get single event by ID
 export const getEventById = async (id: number): Promise<Event> => {
   const response = await api.get<Event>(`/api/events/${id}`);
@@ -86,6 +119,7 @@ export const deleteEvent = async (id: number): Promise<void> => {
 
 export default {
   getEvents,
+  getMyEvents,
   getEventById,
   createEvent,
   updateEvent,

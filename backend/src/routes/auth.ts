@@ -59,7 +59,7 @@ interface CustomJwtPayload extends JwtPayload {
 
 /**
  * @swagger
- * /auth/register:
+ * /api/auth/register:
  *   post:
  *     summary: Создать нового пользователя
  *     tags: [Users]
@@ -124,7 +124,7 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
 
 /**
  * @swagger
- * /auth/login:
+ * /api/auth/login:
  *   post:
  *     summary: Авторизация пользователя
  *     tags: [Users]
@@ -192,30 +192,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction): P
 
 /**
  * @swagger
- * /auth/logout:
- *   post:
- *     summary: Выход пользователя из системы
- *     tags: [Users]
- *     responses:
- *       200:
- *         description: Успешный выход из системы
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Вы успешно вышли из системы
- *       401:
- *         description: Токен недействителен или отсутствует
- *       500:
- *         description: Внутренняя ошибка сервера
- */
-
-/**
- * @swagger
- * /auth/logout:
+ * /api/auth/logout:
  *   post:
  *     summary: Выход пользователя из системы
  *     tags: [Users]
