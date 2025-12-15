@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../components/AuthContext';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { registerUser, clearError } from '../../features/auth/authSlice';
+import { addNotification } from '../../features/ui/uiSlice';
+import { useClearNotificationsOnRouteChange } from '../../hooks/useClearNotificationsOnRouteChange';
+import ErrorNotification from '../../components/ErrorNotification';
 import styles from './Register.module.scss';
 import { Loader2 } from 'lucide-react';
 
@@ -27,7 +31,8 @@ interface FormErrors {
 export const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { register: registerUser, error: authError, loading, clearError } = useAuth();
+  const dispatch = useAppDispatch();
+  const { isLoading } = useAppSelector(state => state.auth);
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
@@ -36,24 +41,31 @@ export const RegisterPage = () => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [formError, setFormError] = useState('');
-  const errorMessage = formError || errors.general || authError || '';
+  const authErrorMessage = useAppSelector(state => state.auth.errorMessage);
+  const errorMessage = formError || errors.general || authErrorMessage || '';
 
   // Handle redirect messages
   useEffect(() => {
     const state = location.state as LocationState | undefined;
     if (state?.message) {
-      setFormError(state.message);
-      // Clear the location state
+      dispatch(addNotification({
+        type: 'info',
+        message: state.message
+      }));
+      // Clear location state
       window.history.replaceState({}, '');
     }
-  }, [location]);
+  }, [location, dispatch]);
 
   // Clear any auth errors when component unmounts
   useEffect(() => {
     return () => {
-      clearError();
+      dispatch(clearError());
     };
-  }, [clearError]);
+  }, [dispatch]);
+
+  // Clear notifications on route change
+  useClearNotificationsOnRouteChange();
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -113,27 +125,33 @@ export const RegisterPage = () => {
     setFormError('');
     
     try {
-      await registerUser({
+      await dispatch(registerUser({
         name: formData.name,
         email: formData.email,
         password: formData.password
-      });
+      })).unwrap();
       
-      // On successful registration, the AuthContext will automatically log the user in
-      // and redirect to the home page or the page they were trying to access
+      // On successful registration, navigate to the home page or the page they were trying to access
       const state = location.state as LocationState | undefined;
       const to = state?.from?.pathname || '/';
       navigate(to, { replace: true });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration failed:', error);
-      // Error is already handled by AuthContext
+      const errorMessage = error.message || error || 'Ошибка регистрации';
+      
+      dispatch(addNotification({
+        type: 'error',
+        message: errorMessage
+      }));
     }
   };
 
   return (
     <div className={styles.registerContainer}>
       <div className={styles.registerBox}>
+        <ErrorNotification isAuthPage={true} />
+        
         <h1 className={styles.title}>Создать аккаунт</h1>
         
         {errorMessage && (
@@ -153,11 +171,11 @@ export const RegisterPage = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              disabled={loading}
+              disabled={isLoading}
               className={`${styles.input} ${errors.name ? styles.inputError : ''}`}
               aria-invalid={!!errors.name}
               aria-errormessage={errors.name ? 'name-error' : undefined}
-              aria-busy={loading}
+              aria-busy={isLoading}
               autoComplete="name"
               placeholder="Введите имя пользователя"
             />
@@ -176,11 +194,11 @@ export const RegisterPage = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              disabled={loading}
+              disabled={isLoading}
               className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
               aria-invalid={!!errors.email}
               aria-errormessage={errors.email ? 'email-error' : undefined}
-              aria-busy={loading}
+              aria-busy={isLoading}
               autoComplete="email"
               placeholder="Введите ваш email"
             />
@@ -199,11 +217,11 @@ export const RegisterPage = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              disabled={loading}
+              disabled={isLoading}
               className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
               aria-invalid={!!errors.password}
               aria-errormessage={errors.password ? 'password-error' : undefined}
-              aria-busy={loading}
+              aria-busy={isLoading}
               autoComplete="new-password"
               placeholder="Введите пароль"
             />
@@ -222,11 +240,11 @@ export const RegisterPage = () => {
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              disabled={loading}
+              disabled={isLoading}
               className={`${styles.input} ${errors.confirmPassword ? styles.inputError : ''}`}
               aria-invalid={!!errors.confirmPassword}
               aria-errormessage={errors.confirmPassword ? 'confirm-password-error' : undefined}
-              aria-busy={loading}
+              aria-busy={isLoading}
               autoComplete="new-password"
               placeholder="Повторите пароль"
             />
@@ -237,11 +255,11 @@ export const RegisterPage = () => {
           
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className={styles.submitButton}
-            aria-busy={loading}
+            aria-busy={isLoading}
           >
-            {loading ? (
+            {isLoading ? (
               <>
                 <Loader2 className={styles.spinner} />
                 Регистрация...

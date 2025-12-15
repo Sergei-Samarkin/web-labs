@@ -111,8 +111,15 @@ router.post('/register', async (req: Request, res: Response, next: NextFunction)
         }
 
         const user = await User.create({ name, email, password });
+        
+        // Генерируем токен для нового пользователя
+        const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET as string, {
+            expiresIn: '1d',
+        });
+
         res.status(201).json({
             message: 'Пользователь зарегистрирован',
+            token,
             user: { id: user.id, name: user.name, email: user.email },
         });
     } catch (err: unknown) {

@@ -8,6 +8,9 @@ interface AuthenticatedRequest extends ExpressRequest {
 
 type Request = AuthenticatedRequest;
 import Event from '@/models/event';
+import EventParticipant from '@/models/eventParticipant';
+import User from '@/models/user';
+import '@/models'; // Загружаем все ассоциации
 import passport from 'passport';
 import checkBlacklist from '@/middleware/checkBlacklist';
 
@@ -317,6 +320,139 @@ router.delete(
 
             await event.destroy();
             res.json({ message: 'Мероприятие удалено' });
+        } catch (error: unknown) {
+            const err = error as Error;
+            next(err);
+        }
+    },
+);
+
+/**
+ * @swagger
+ * /api/events/{id}/participate:
+ *   post:
+ *     summary: Участвовать в мероприятии
+ *     tags: [Events]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия
+ *     responses:
+ *       201:
+ *         description: Участие успешно оформлено
+ *       400:
+ *         description: Уже участвуете в мероприятии
+ *       404:
+ *         description: Мероприятие не найдено
+ *       401:
+ *         description: Не авторизован
+ */
+router.post(
+    '/:id/participate',
+    passport.authenticate('jwt', { session: false }),
+    checkBlacklist as unknown as RequestHandler,
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const eventId = parseInt(req.params.id);
+            const userId = req.user?.id as number;
+
+            // Check if event exists
+            const event = await Event.findByPk(eventId);
+            if (!event) {
+                res.status(404).json({ message: 'Мероприятие не найдено' });
+                return;
+            }
+
+            // Check if already participating
+            const existingParticipation = await EventParticipant.findOne({
+                where: { eventId, userId }
+            });
+
+            if (existingParticipation) {
+                res.status(400).json({ message: 'Вы уже участвуете в этом мероприятии' });
+                return;
+            }
+
+            // Create participation
+            await EventParticipant.create({ eventId, userId });
+            res.status(201).json({ message: 'Участие успешно оформлено' });
+        } catch (error: unknown) {
+            const err = error as Error;
+            next(err);
+        }
+    },
+);
+
+/**
+ * @swagger
+ * /api/events/{id}/participants:
+ *   get:
+ *     summary: Получить список участников мероприятия
+ *     tags: [Events]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID мероприятия
+ *     responses:
+ *       200:
+ *         description: Список участников
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   name:
+ *                     type: string
+ *                   email:
+ *                     type: string
+
+ *       404:
+ *         description: Мероприятие не найдено
+ */
+router.get(
+    '/:id/participants',
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const eventId = parseInt(req.params.id);
+
+            // Check if event exists
+            const event = await Event.findByPk(eventId);
+            if (!event) {
+                res.status(404).json({ message: 'Мероприятие не найдено' });
+                return;
+            }
+
+            // Get participants
+            const participants = await EventParticipant.findAll({
+                where: { eventId },
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: ['id', 'name', 'email']
+                    }
+                ]
+            });
+
+            const formattedParticipants = participants.map(participant => ({
+                id: participant.user?.id,
+                name: participant.user?.name,
+                email: participant.user?.email
+            }));
+
+            res.json(formattedParticipants);
         } catch (error: unknown) {
             const err = error as Error;
             next(err);

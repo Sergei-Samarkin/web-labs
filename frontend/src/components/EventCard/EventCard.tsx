@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button, Tag, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, MailOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Button, Tag, Tooltip, Badge } from 'antd';
+import { EditOutlined, DeleteOutlined, MailOutlined, LoadingOutlined, EyeOutlined, UserAddOutlined, TeamOutlined } from '@ant-design/icons';
 import type { Event } from '../../api/eventService';
 import styles from './EventCard.module.scss';
 
@@ -8,16 +8,26 @@ interface EventCardProps {
   event: Event;
   onEdit: (event: Event) => void;
   onDelete: (id: number) => void;
+  onView: (event: Event) => void;
+  onParticipate?: (eventId: number) => void;
+  onShowParticipants?: (eventId: number) => void;
   userEmail?: string;
   isLoadingEmail?: boolean;
+  currentUserId?: number;
+  participantsCount?: number;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
   event,
   onEdit,
   onDelete,
+  onView,
+  onParticipate,
+  onShowParticipants,
   userEmail,
-  isLoadingEmail
+  isLoadingEmail,
+  currentUserId,
+  participantsCount
 }) => {
   const formatDate = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
@@ -56,6 +66,32 @@ export const EventCard: React.FC<EventCardProps> = ({
         {event.description}
       </div>
       
+      {participantsCount !== undefined && (
+        <div className={styles.participants} style={{ marginBottom: '12px' }}>
+          <Badge 
+            count={participantsCount} 
+            showZero 
+            style={{ backgroundColor: '#52c41a' }}
+          >
+            <Button
+              type="text"
+              icon={<TeamOutlined />}
+              onClick={() => onShowParticipants?.(event.id)}
+              size="small"
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                padding: '4px 8px',
+                color: '#52c41a',
+                border: '1px solid #d9d9d9'
+              }}
+            >
+              Участники
+            </Button>
+          </Badge>
+        </div>
+      )}
+      
       <div className={styles.date}>
         <strong>Дата:</strong> {formatDate(event.date)}
       </div>
@@ -78,25 +114,52 @@ export const EventCard: React.FC<EventCardProps> = ({
       )}
       
       <div className={styles.actions}>
-        <Button
-          type="default"
-          icon={<EditOutlined />}
-          onClick={() => onEdit(event)}
-          className={styles.editButton}
-          size="small"
-        >
-          Редактировать
-        </Button>
-        <Button
-          type="primary"
-          danger
-          icon={<DeleteOutlined />}
-          onClick={() => onDelete(event.id)}
-          className={styles.deleteButton}
-          size="small"
-        >
-          Удалить
-        </Button>
+        {currentUserId && event.createdBy === currentUserId ? (
+          <>
+            <Button
+              type="default"
+              icon={<EditOutlined />}
+              onClick={() => onEdit(event)}
+              className={styles.editButton}
+              size="small"
+            >
+              Редактировать
+            </Button>
+            <Button
+              type="primary"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => onDelete(event.id)}
+              className={styles.deleteButton}
+              size="small"
+            >
+              Удалить
+            </Button>
+          </>
+        ) : (
+          <>
+            {onParticipate && currentUserId && (
+              <Button
+                type="primary"
+                icon={<UserAddOutlined />}
+                onClick={() => onParticipate(event.id)}
+                className={styles.participateButton}
+                size="small"
+              >
+                Участвовать
+              </Button>
+            )}
+            <Button
+              type="default"
+              icon={<EyeOutlined />}
+              onClick={() => onView(event)}
+              className={styles.viewButton}
+              size="small"
+            >
+              Просмотр
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

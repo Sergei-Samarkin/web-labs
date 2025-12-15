@@ -1,0 +1,40 @@
+.error-notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 400px;
+  width: 100%;
+}
+
+.error-notification-container.auth-page {
+  position: relative;
+  top: auto;
+  right: auto;
+  margin: 0 0 20px 0;
+  max-width: 100%;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.error-notification-container .ant-alert {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+}
+
+@media (max-width: 768px) {
+  .error-notification-container {
+    left: 20px;
+    right: 20px;
+    max-width: none;
+  }
+}

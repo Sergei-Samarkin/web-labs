@@ -117,6 +117,17 @@ export const deleteEvent = async (id: number): Promise<void> => {
   await api.delete(`/api/events/${id}`);
 };
 
+// Participate in event
+export const participateInEvent = async (eventId: number): Promise<void> => {
+  await api.post(`/api/events/${eventId}/participate`);
+};
+
+// Get event participants
+export const getEventParticipants = async (eventId: number): Promise<User[]> => {
+  const response = await api.get<User[]>(`/api/events/${eventId}/participants`);
+  return response.data;
+};
+
 export default {
   getEvents,
   getMyEvents,
@@ -124,4 +135,6 @@ export default {
   createEvent,
   updateEvent,
   deleteEvent,
+  participateInEvent,
+  getEventParticipants,
 };

@@ -117,6 +117,19 @@
         border-color: #ff7875;
       }
     }
+
+    .viewButton {
+      flex: 1;
+      background-color: var(--card-bg);
+      border-color: var(--border-color);
+      color: var(--text-color);
+
+      &:hover {
+        background-color: var(--hover-color);
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+      }
+    }
   }
 }
 
