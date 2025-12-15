@@ -1,8 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { logoutUser } from '../../features/auth/authSlice';
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAppSelector(state => state.auth);
+  const dispatch = useAppDispatch();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -16,11 +18,12 @@ const Header = () => {
     margin: '0 1.5rem',
     borderBottom: '2px solid transparent', // одинаковый border
     boxSizing: 'border-box' as const,
-    minWidth: '100px',
+    minWidth: '120px', // увеличил с 100px до 120px для "Все мероприятия"
     justifyContent: 'center',
     textDecoration: 'none',
     color: '#e1e1e1',
     transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap', // предотвращаем перенос текста
   };
 
   const activeLinkStyle = {
@@ -31,7 +34,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await dispatch(logoutUser()).unwrap();
     } catch (error) {
       console.error('Ошибка при выходе:', error);
     }
@@ -70,11 +73,13 @@ const Header = () => {
             Главная
           </Link>
           <Link to="/events" style={isActive('/events') ? activeLinkStyle : baseNavStyle}>
-            Мероприятия
+            Все мероприятия
           </Link>
           {user ? (
             <>
-              <span style={{ margin: '0 1rem', color: '#e1e1e1' }}>{user.email}</span>
+              <Link to="/profile" style={isActive('/profile') ? activeLinkStyle : baseNavStyle}>
+                Профиль
+              </Link>
               <button 
                 onClick={handleLogout}
                 style={{

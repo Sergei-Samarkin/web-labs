@@ -1,10 +1,10 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAppSelector } from '../app/hooks';
 
 export const ProtectedRoute = () => {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAppSelector(state => state.auth);
 
-  if (loading) {
+  if (isLoading) {
     return <div>Загрузка...</div>; // Или любой другой индикатор загрузки
   }
 

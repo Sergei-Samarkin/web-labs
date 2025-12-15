@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Tag, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, MailOutlined, LoadingOutlined } from '@ant-design/icons';
+import { EditOutlined, DeleteOutlined, MailOutlined, LoadingOutlined, EyeOutlined } from '@ant-design/icons';
 import type { Event } from '../../api/eventService';
 import styles from './EventCard.module.scss';
 
@@ -8,16 +8,20 @@ interface EventCardProps {
   event: Event;
   onEdit: (event: Event) => void;
   onDelete: (id: number) => void;
+  onView: (event: Event) => void;
   userEmail?: string;
   isLoadingEmail?: boolean;
+  currentUserId?: number;
 }
 
 export const EventCard: React.FC<EventCardProps> = ({
   event,
   onEdit,
   onDelete,
+  onView,
   userEmail,
-  isLoadingEmail
+  isLoadingEmail,
+  currentUserId
 }) => {
   const formatDate = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
@@ -78,25 +82,39 @@ export const EventCard: React.FC<EventCardProps> = ({
       )}
       
       <div className={styles.actions}>
-        <Button
-          type="default"
-          icon={<EditOutlined />}
-          onClick={() => onEdit(event)}
-          className={styles.editButton}
-          size="small"
-        >
-          Редактировать
-        </Button>
-        <Button
-          type="primary"
-          danger
-          icon={<DeleteOutlined />}
-          onClick={() => onDelete(event.id)}
-          className={styles.deleteButton}
-          size="small"
-        >
-          Удалить
-        </Button>
+        {currentUserId && event.createdBy === currentUserId ? (
+          <>
+            <Button
+              type="default"
+              icon={<EditOutlined />}
+              onClick={() => onEdit(event)}
+              className={styles.editButton}
+              size="small"
+            >
+              Редактировать
+            </Button>
+            <Button
+              type="primary"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => onDelete(event.id)}
+              className={styles.deleteButton}
+              size="small"
+            >
+              Удалить
+            </Button>
+          </>
+        ) : (
+          <Button
+            type="default"
+            icon={<EyeOutlined />}
+            onClick={() => onView(event)}
+            className={styles.viewButton}
+            size="small"
+          >
+            Просмотр
+          </Button>
+        )}
       </div>
     </div>
   );
