@@ -170,6 +170,9 @@ const authSlice = createSlice({
         state.isLoading = false
         state.isAuthenticated = true
         state.user = action.payload
+        // Получаем токен из localStorage при проверке статуса
+        const token = localStorage.getItem('token');
+        state.token = token
         state.isError = false
         state.errorMessage = null
       })

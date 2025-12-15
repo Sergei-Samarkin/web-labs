@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import type { PayloadAction } from '@reduxjs/toolkit'
-import { getEvents, getMyEvents, createEvent, updateEvent, deleteEvent, type Event, type CreateEventData } from '../../api/eventService'
+import { getEvents, getMyEvents, createEvent, updateEvent, deleteEvent, participateInEvent, type Event, type CreateEventData } from '../../api/eventService'
 
 interface EventsState {
   events: Event[]
@@ -14,6 +14,8 @@ interface EventsState {
   updateEventError: string | null
   deleteEventLoading: boolean
   deleteEventError: string | null
+  participateLoading: boolean
+  participateError: string | null
 }
 
 const initialState: EventsState = {
@@ -28,6 +30,8 @@ const initialState: EventsState = {
   updateEventError: null,
   deleteEventLoading: false,
   deleteEventError: null,
+  participateLoading: false,
+  participateError: null,
 }
 
 // Async thunks
@@ -91,6 +95,18 @@ export const deleteEventAsync = createAsyncThunk(
   }
 )
 
+export const participateInEventAsync = createAsyncThunk(
+  'events/participateInEvent',
+  async (eventId: number, { rejectWithValue }) => {
+    try {
+      await participateInEvent(eventId)
+      return eventId
+    } catch (error) {
+      return rejectWithValue(error instanceof Error ? error.message : 'Failed to participate in event')
+    }
+  }
+)
+
 const eventsSlice = createSlice({
   name: 'events',
   initialState,
@@ -108,6 +124,9 @@ const eventsSlice = createSlice({
     clearDeleteEventError: (state) => {
       state.deleteEventError = null
     },
+    clearParticipateError: (state) => {
+      state.participateError = null
+    },
     resetEvents: (state) => {
       state.events = []
       state.myEvents = []
@@ -120,6 +139,8 @@ const eventsSlice = createSlice({
       state.updateEventError = null
       state.deleteEventLoading = false
       state.deleteEventError = null
+      state.participateLoading = false
+      state.participateError = null
     },
   },
   extraReducers: (builder) => {
@@ -225,6 +246,27 @@ const eventsSlice = createSlice({
         state.deleteEventLoading = false
         state.deleteEventError = action.payload as string
       })
+
+    // Participate in event
+    builder
+      .addCase(participateInEventAsync.pending, (state) => {
+        state.participateLoading = true
+        state.participateError = null
+      })
+      .addCase(participateInEventAsync.fulfilled, (state, action: PayloadAction<number>) => {
+        state.participateLoading = false
+        state.participateError = null
+        // Optionally update event to show participation
+        const eventIndex = state.events.findIndex(event => event.id === action.payload)
+        if (eventIndex !== -1) {
+          // You could add a 'isParticipating' flag to the event interface if needed
+          // For now, we just clear the loading state
+        }
+      })
+      .addCase(participateInEventAsync.rejected, (state, action) => {
+        state.participateLoading = false
+        state.participateError = action.payload as string
+      })
   },
 })
 
@@ -233,6 +275,7 @@ export const {
   clearCreateEventError,
   clearUpdateEventError,
   clearDeleteEventError,
+  clearParticipateError,
   resetEvents,
 } = eventsSlice.actions
 

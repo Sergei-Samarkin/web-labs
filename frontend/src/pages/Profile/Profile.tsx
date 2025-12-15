@@ -1,15 +1,17 @@
-import { useAppSelector } from '../../app/hooks';
+import { useAppSelector, useAppDispatch } from '../../app/hooks';
 import { useState, useEffect } from 'react';
 import { Button, message, Alert, App, Spin } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import EventForm from '../../components/EventForm/index';
 import EventCard from '../../components/EventCard/EventCard';
-import { getMyEvents, deleteEvent, type Event } from '../../api/eventService';
+import { getMyEvents, type Event } from '../../api/eventService';
+import { deleteEventAsync } from '../../features/events/eventsSlice';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import styles from './Profile.module.scss';
 
 export const ProfilePage = () => {
   const { user } = useAppSelector(state => state.auth);
+  const dispatch = useAppDispatch();
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -161,7 +163,7 @@ export const ProfilePage = () => {
       okType: 'danger',
       onOk: async () => {
         try {
-          await deleteEvent(id);
+          await dispatch(deleteEventAsync(id)).unwrap();
           message.success('Мероприятие успешно удалено');
           fetchUserEvents(); // Refresh events list
         } catch (error: any) {
